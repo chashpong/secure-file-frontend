@@ -1,0 +1,93 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #5a9bd4, #0f2f4f);
+  color: #000;
+  min-height: 100vh;
+}
+
+nav {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 60px 20px 20px; /* เพิ่มระยะห่างด้านบนอีก 5cm (ประมาณ 200px) */
+  margin-bottom: 20px;
+}
+
+nav button {
+  padding: 10px 15px;
+  font-size: 16px;
+  border-radius: 8px;
+  color: black;
+  border: 1px solid #ccc;
+  background-color: #f4f4f4;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+nav button:hover {
+  background-color: #ddd;
+}
+
+.container {
+  max-width: 500px;
+  margin: auto;
+  padding: 40px 30px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  margin-top: 60px;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button {
+  background-color: black;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.link {
+  display: block;
+  margin-top: 10px;
+  color: #002266;
+  text-decoration: underline;
+  text-align: center;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+.table th, .table td {
+  padding: 12px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+.folder-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 40px auto;
+  max-width: 600px;
+  text-align: center;
+}
+
+.folder {
+  font-size: 48px;
+  color: black;
+  cursor: pointer;
+}
