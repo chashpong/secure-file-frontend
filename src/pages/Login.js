@@ -4,33 +4,40 @@ import { useNavigate } from "react-router-dom";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Reset error state
+    setError("");
     try {
-      // ส่งข้อมูลไปที่ Backend
-      const res = await fetch('http://localhost:3000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        // ✅ หากเข้าสู่ระบบสำเร็จ
-        localStorage.setItem('token', data.token); // เก็บ JWT token ลง localStorage
-        navigate('/upload'); // ไปหน้า upload
+        // ✅ เก็บ token, uid, email ไว้ใช้ทีหลัง
+        localStorage.setItem("token", data.token);
+
+        // รองรับได้ทั้ง data.user._id และ data.userId
+        if (data.user?._id) localStorage.setItem("uid", data.user._id);
+        else if (data.userId) localStorage.setItem("uid", data.userId);
+
+        if (data.user?.email) localStorage.setItem("email", data.user.email);
+        else if (data.email) localStorage.setItem("email", data.email);
+        else localStorage.setItem("email", email); // fallback
+
+        navigate("/upload");
       } else {
-        // ❌ หากเกิดข้อผิดพลาด
-        setError(data.error || 'Login failed');
+        setError(data.error || "Login failed");
       }
     } catch (err) {
-      console.error('❌ Login Error:', err);
-      setError('Network error');
+      console.error("❌ Login Error:", err);
+      setError("Network error");
     }
   };
 
@@ -54,9 +61,20 @@ function Login() {
         />
         <button type="submit">Sign In</button>
       </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <div className="link" onClick={() => navigate("/forgot-password")}>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <div
+        className="link"
+        onClick={() => navigate("/forgot-password")}
+        style={{ cursor: "pointer", color: "blue" }}
+      >
         Forgot Password?
+      </div>
+      <div
+        className="link"
+        onClick={() => navigate("/register")}
+        style={{ cursor: "pointer", color: "blue" }}
+      >
+        Register
       </div>
     </div>
   );
