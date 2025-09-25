@@ -1,44 +1,108 @@
+/* ======= พื้นหลังของ body ======= */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: linear-gradient(135deg, #5a9bd4, #0f2f4f);
   color: #000;
   min-height: 100vh;
-}
-
-nav {
   display: flex;
-  justify-content: center;
-  gap: 10px;
-  padding: 60px 20px 20px; /* เพิ่มระยะห่างด้านบนอีก 5cm (ประมาณ 200px) */
-  margin-bottom: 20px;
+  flex-direction: column;
+  padding-bottom: 20px;
 }
 
-nav button {
-  padding: 10px 15px;
-  font-size: 16px;
-  border-radius: 8px;
-  color: black;
-  border: 1px solid #ccc;
-  background-color: #f4f4f4;
+/* ======= เมนู Navigation ======= */
+.navbar {
+  display: flex;
+  justify-content: space-between;   /* ซ้าย = title, กลาง = ปุ่ม, ขวา = โปรไฟล์ */
+  align-items: center;
+  padding: 15px 30px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 0 0 12px 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ชื่อระบบซ้ายบน */
+.nav-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #0f2f4f;
+  flex-shrink: 0;
+}
+
+/* ปุ่มเมนูกลาง */
+.nav-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex: 1;
+}
+
+.nav-buttons button {
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: bold;
+  border-radius: 6px;
+  background-color: #0077b6;
+  color: white;
+  border: none;
   cursor: pointer;
   transition: background 0.3s;
+  min-width: 120px;
+  white-space: nowrap;
 }
 
-nav button:hover {
-  background-color: #ddd;
+.nav-buttons button:hover {
+  background-color: #005f87;
 }
 
+/* โปรไฟล์ขวา */
+.nav-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.nav-email {
+  font-weight: bold;
+  color: #333;
+}
+
+.nav-profile button {
+  background-color: #e63946;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.nav-profile button:hover {
+  background-color: #b71c1c;
+}
+
+/* ======= Container ======= */
 .container {
-  max-width: 500px;
+  width: 90%;
+  max-width: 1200px;
   margin: auto;
   padding: 40px 30px;
   background-color: rgba(255, 255, 255, 0.95);
   border-radius: 12px;
-  margin-top: 60px;
+  margin-top: 15px;
+  display: block;
+  min-height: 100px;
+  flex-grow: 1;
+  overflow-x: hidden;
 }
 
-input, select, button {
+/* ======= Input, Select, Button (ทั่วไป) ======= */
+input,
+select,
+button {
   width: 100%;
   padding: 12px;
   margin: 10px 0;
@@ -48,7 +112,7 @@ input, select, button {
 }
 
 button {
-  background-color: black;
+  background-color: rgb(53, 163, 206);
   color: white;
   cursor: pointer;
 }
@@ -57,6 +121,7 @@ button:hover {
   opacity: 0.9;
 }
 
+/* ======= ลิงก์ ======= */
 .link {
   display: block;
   margin-top: 10px;
@@ -65,18 +130,30 @@ button:hover {
   text-align: center;
 }
 
+/* ======= ตาราง (ไม่เลื่อน, ไม่ล้น) ======= */
+.table-container {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
   background-color: white;
+  margin-bottom: 20px;
 }
 
-.table th, .table td {
+.table th,
+.table td {
   padding: 12px;
   border: 1px solid #ccc;
   text-align: left;
+  word-wrap: break-word;   /* ตัดคำ */
+  white-space: normal;     /* ให้ขึ้นบรรทัดใหม่ได้ */
+  max-width: 250px;        /* จำกัดความกว้าง */
 }
 
+/* ======= การจัดเรียงโฟลเดอร์ ======= */
 .folder-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -88,6 +165,6 @@ button:hover {
 
 .folder {
   font-size: 48px;
-  color: black;
+  color: rgb(2, 19, 24);
   cursor: pointer;
 }

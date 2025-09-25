@@ -1,36 +1,36 @@
-// src/pages/Folder.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 function Folder() {
   const [folders, setFolders] = useState([]);
   const [newFolder, setNewFolder] = useState("");
-  const currentUserId = localStorage.getItem("uid") || "";
   const navigate = useNavigate();
 
   // โหลดโฟลเดอร์จาก backend
   useEffect(() => {
     const fetchFolders = async () => {
       try {
-        const url = new URL("http://localhost:3000/api/folders");
-        if (currentUserId) url.searchParams.set("userId", currentUserId);
-        const res = await fetch(url.toString());
-        const data = await res.json();
+        const res = await fetch("http://localhost:3000/api/folders", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // ✅ ใช้ token
+          },
+        });
 
-        // ✅ ป้องกัน folders.map is not a function
-        if (Array.isArray(data)) {
-          setFolders(data);
-        } else {
-          setFolders([]);
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "Failed to fetch folders");
         }
+
+        const data = await res.json();
+        setFolders(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("❌ Error loading folders:", err);
+        console.error("❌ Error loading folders:", err.message);
         setFolders([]);
       }
     };
 
     fetchFolders();
-  }, [currentUserId]);
+  }, []);
 
   // ฟังก์ชันเพิ่มโฟลเดอร์
   const handleAdd = async () => {
@@ -41,25 +41,31 @@ function Folder() {
     try {
       const res = await fetch("http://localhost:3000/api/folders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newFolder,
-          userId: currentUserId,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // ✅ ใช้ token
+        },
+        body: JSON.stringify({ name: newFolder }),
       });
 
-      if (!res.ok) throw new Error("Failed to add folder");
-      setNewFolder(""); // ล้างช่อง input
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error || "Failed to add folder");
+      }
+
+      setNewFolder("");
 
       // reload รายการใหม่
-      const url = new URL("http://localhost:3000/api/folders");
-      if (currentUserId) url.searchParams.set("userId", currentUserId);
-      const reload = await fetch(url.toString());
+      const reload = await fetch("http://localhost:3000/api/folders", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       const data = await reload.json();
       setFolders(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("❌ Add folder failed:", err);
-      alert("เพิ่มโฟลเดอร์ไม่สำเร็จ");
+      console.error("❌ Add folder failed:", err.message);
+      alert(err.message || "เพิ่มโฟลเดอร์ไม่สำเร็จ");
     }
   };
 
@@ -81,16 +87,19 @@ function Folder() {
       </div>
 
       <div style={{ marginTop: "20px" }}>
-        {Array.isArray(folders) &&
-          folders.map((f, idx) => (
+        {Array.isArray(folders) && folders.length > 0 ? (
+          folders.map((f) => (
             <div
-              key={idx}
+              key={f._id}
               style={{ margin: "10px 0", cursor: "pointer", color: "blue" }}
-              onClick={() => handleOpenFolder(f.name || f)}
+              onClick={() => handleOpenFolder(f.name)}
             >
-              <span role="img" aria-label="folder">📁</span> {f.name || f}
+              <span role="img" aria-label="folder">📁</span> {f.name}
             </div>
-          ))}
+          ))
+        ) : (
+          <p>⚠️ ยังไม่มีโฟลเดอร์</p>
+        )}
       </div>
     </div>
   );

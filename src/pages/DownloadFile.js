@@ -21,25 +21,24 @@ async function deriveKeyBytes(input) {
 function DownloadFile() {
   const [files, setFiles] = useState([]);
   const [decryptKey, setDecryptKey] = useState("");
-  const currentUserId = localStorage.getItem("uid") || "";
 
   useEffect(() => {
     (async () => {
       try {
-        if (!currentUserId) {
-          alert("❌ ไม่พบ userId, กรุณา login ก่อน");
-          return;
-        }
-        const url = new URL("http://localhost:3000/api/files");
-        url.searchParams.set("userId", currentUserId); // ✅ ส่ง userId
-        const res = await fetch(url.toString());
+        const res = await fetch("http://localhost:3000/api/files", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
         const data = await res.json();
-        setFiles(data);
+
+        console.log("📂 Files API response:", data);
+
+        setFiles(Array.isArray(data) ? data : []);
       } catch (e) {
-        console.error("Failed to load files:", e);
+        console.error("❌ Failed to load files:", e);
+        setFiles([]);
       }
     })();
-  }, [currentUserId]);
+  }, []);
 
   const handleDownload = async (f) => {
     try {
@@ -47,19 +46,18 @@ function DownloadFile() {
         alert("กรุณาใส่รหัสสำหรับถอดรหัสไฟล์");
         return;
       }
-      if (!currentUserId) {
-        alert("❌ ไม่มี userId (ยังไม่ได้ login)");
-        return;
-      }
 
-      // 1) ดาวน์โหลด ciphertext (แนบ userId)
+      // ✅ ดาวน์โหลดโดยใช้ token ไม่ต้องส่ง userId
       const res = await fetch(
-        `http://localhost:3000/api/download/${f.id}?userId=${currentUserId}`
+        `http://localhost:3000/api/download/${f.storedName}`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
       );
       if (!res.ok) throw new Error("Download failed");
       const cipherBuf = await res.arrayBuffer();
 
-      // 2) เตรียม key และ iv แล้วถอดรหัสบน client
+      // 🔑 เตรียม key และ iv
       const keyBytes = await deriveKeyBytes(decryptKey.trim());
       const cryptoKey = await crypto.subtle.importKey(
         "raw",
@@ -76,7 +74,7 @@ function DownloadFile() {
         cipherBuf
       );
 
-      // 3) สร้าง Blob ด้วย mime เดิม แล้ว save
+      // 💾 Save ไฟล์
       const blob = new Blob([plainBuf], {
         type: f.mime || "application/octet-stream",
       });
@@ -117,18 +115,26 @@ function DownloadFile() {
           </tr>
         </thead>
         <tbody>
-          {files.map((f) => (
-            <tr key={f.id}>
-              <td>{f.filename}</td>
-              <td>{f.folder}</td>
-              <td>{fmt(f.uploadedAt)}</td>
-              <td>
-                <button onClick={() => handleDownload(f)}>
-                  Download & Decrypt
-                </button>
+          {files.length > 0 ? (
+            files.map((f) => (
+              <tr key={f.id}>
+                <td>{f.filename}</td>
+                <td>{f.folder}</td>
+                <td>{fmt(f.uploadedAt)}</td>
+                <td>
+                  <button onClick={() => handleDownload(f)}>
+                    Download & Decrypt
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="4" style={{ textAlign: "center" }}>
+                ไม่มีไฟล์ที่อัปโหลด
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>

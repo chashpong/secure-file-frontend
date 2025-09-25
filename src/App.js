@@ -27,20 +27,25 @@ function NavBar() {
   };
 
   return (
-    <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      {/* เมนูซ้าย */}
-      <div>
+    <nav className="navbar">
+      {/* ชื่อระบบด้านซ้าย */}
+      <div className="nav-title">
+        Secure File Storage 
+      </div>
+
+      {/* ปุ่มเมนูตรงกลาง */}
+      <div className="nav-buttons">
         <button onClick={() => navigate("/upload")}>UploadFile</button>
         <button onClick={() => navigate("/download")}>DownloadFile</button>
         <button onClick={() => navigate("/audit-logs")}>AuditLogs</button>
         <button onClick={() => navigate("/folder")}>Folder</button>
       </div>
 
-      {/* โปรไฟล์ขวา */}
-      <div>
+      {/* โปรไฟล์ด้านขวา */}
+      <div className="nav-profile">
         {email && (
           <>
-            <span style={{ marginRight: "10px" }}>👤 {email}</span>
+            <span className="nav-email"> {email}</span>
             <button onClick={handleLogout}>Logout</button>
           </>
         )}

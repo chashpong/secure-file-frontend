@@ -6,9 +6,7 @@ const isHex64 = (s) => /^[0-9a-f]{64}$/i.test(String(s || ""));
 const hexToBytes = (hex) =>
   new Uint8Array(hex.match(/.{1,2}/g).map((b) => parseInt(b, 16)));
 const bytesToHex = (buf) =>
-  [...new Uint8Array(buf)]
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 const sha256Hex = async (text) => {
   const enc = new TextEncoder().encode(String(text));
   const buf = await crypto.subtle.digest("SHA-256", enc);
@@ -21,8 +19,7 @@ async function deriveKeyBytes(input) {
 
 function UploadFile() {
   const [file, setFile] = useState(null);
-  const [filename, setFilename] = useState("");
-  const [folder, setFolder] = useState(localStorage.getItem("lastFolder") || "");
+  const [folder, setFolder] = useState(localStorage.getItem("lastFolderId") || "");
   const [folders, setFolders] = useState([]);
   const [encryptionKey, setEncryptionKey] = useState("");
   const [warning, setWarning] = useState("");
@@ -35,15 +32,15 @@ function UploadFile() {
       try {
         const url = new URL("http://localhost:3000/api/folders");
         if (currentUserId) url.searchParams.set("userId", currentUserId);
-        const res = await fetch(url.toString());
-        const data = await res.json();
 
-        // ✅ ป้องกัน folders.map error
-        if (Array.isArray(data)) {
-          setFolders(data);
-        } else {
-          setFolders([]);
-        }
+        const res = await fetch(url.toString(), {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        const data = await res.json();
+        setFolders(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("❌ Failed to fetch folders", err);
         setFolders([]);
@@ -75,8 +72,8 @@ function UploadFile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file || !filename) {
-      alert("กรุณาเลือกไฟล์และตั้งชื่อไฟล์");
+    if (!file) {
+      alert("กรุณาเลือกไฟล์");
       return;
     }
     if (!encryptionKey.trim()) {
@@ -98,7 +95,7 @@ function UploadFile() {
         false,
         ["encrypt"]
       );
-      const iv = crypto.getRandomValues(new Uint8Array(16)); // ✅ 16 bytes ตรงกับ backend
+      const iv = crypto.getRandomValues(new Uint8Array(16)); // IV 16 bytes
       const cipherBuf = await crypto.subtle.encrypt(
         { name: "AES-GCM", iv },
         cryptoKey,
@@ -106,26 +103,33 @@ function UploadFile() {
       );
 
       const formData = new FormData();
-      formData.append("cipher", new Blob([cipherBuf]), `${Date.now()}_${file.name}.enc`);
+      formData.append(
+        "cipher",
+        new Blob([cipherBuf]),
+        `${Date.now()}_${file.name}.enc`
+      );
       formData.append("originalName", file.name);
-      formData.append("filename", filename);
+      formData.append("filename", file.name); // ✅ ใช้ชื่อไฟล์จริงแทน
       formData.append("folder", folder);
-      formData.append("iv", bytesToHex(iv)); // ✅ ส่ง 32 hex
+      formData.append("iv", bytesToHex(iv));
       formData.append("mime", file.type || "application/octet-stream");
       if (currentUserId) formData.append("userId", currentUserId);
 
       const res = await fetch("http://localhost:3000/api/upload", {
         method: "POST",
         body: formData,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
+
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Upload failed");
 
       alert("✅ อัปโหลดไฟล์ที่เข้ารหัสแล้วสำเร็จ");
-      localStorage.setItem("lastFolder", folder);
+      localStorage.setItem("lastFolderId", folder);
 
       setFile(null);
-      setFilename("");
       setEncryptionKey("");
       setWarning("");
     } catch (err) {
@@ -140,18 +144,12 @@ function UploadFile() {
       <form onSubmit={handleSubmit}>
         <input type="file" onChange={handleFileChange} />
 
-        <input
-          placeholder="ตั้งชื่อไฟล์"
-          value={filename}
-          onChange={(e) => setFilename(e.target.value)}
-        />
-
         <label>เลือกโฟลเดอร์</label>
         <select value={folder} onChange={(e) => setFolder(e.target.value)}>
           <option value="">-- เลือกโฟลเดอร์ --</option>
           {Array.isArray(folders) &&
             folders.map((f) => (
-              <option key={f._id || f.name} value={f.name}>
+              <option key={f._id} value={f._id}>
                 {f.name}
               </option>
             ))}

@@ -1,4 +1,3 @@
-// src/pages/FolderDetail.js
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
@@ -6,26 +5,28 @@ function FolderDetail() {
   const { name } = useParams(); // ดึงชื่อโฟลเดอร์จาก URL
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const currentUserId = localStorage.getItem("uid") || "";
 
   useEffect(() => {
     const fetchFiles = async () => {
       try {
         const url = new URL("http://localhost:3000/api/files");
-        if (currentUserId) url.searchParams.set("userId", currentUserId);
         if (name) url.searchParams.set("folder", name);
 
-        const res = await fetch(url.toString());
-        const data = await res.json();
+        const res = await fetch(url.toString(), {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // ✅ ใช้ token
+          },
+        });
 
-        // ✅ ป้องกัน files.map is not a function
-        if (Array.isArray(data)) {
-          setFiles(data);
-        } else {
-          setFiles([]);
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "Failed to fetch files");
         }
+
+        const data = await res.json();
+        setFiles(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("❌ Error loading files:", err);
+        console.error("❌ Error loading files:", err.message);
         setFiles([]);
       } finally {
         setLoading(false);
@@ -33,7 +34,36 @@ function FolderDetail() {
     };
 
     fetchFiles();
-  }, [name, currentUserId]);
+  }, [name]);
+
+  const handleDownload = async (f) => {
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/download/${f.storedName}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Download failed");
+      }
+
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = f.filename || "downloaded_file";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      alert("❌ Download failed: " + err.message);
+      console.error("❌ Download error:", err.message);
+    }
+  };
 
   return (
     <div className="container">
@@ -45,21 +75,21 @@ function FolderDetail() {
         <p>⚠️ ยังไม่มีไฟล์ในโฟลเดอร์นี้</p>
       ) : (
         <div className="grid">
-          {files.map((f, idx) => (
-            <div key={f._id || idx} className="card">
+          {files.map((f) => (
+            <div key={f.id} className="card">
               <div className="card-body">
                 <h3 className="card-title">{f.filename}</h3>
-                <p>📄 <b>ชื่อจริง:</b> {f.originalName}</p>
+                <p>📄 <b>ชื่อจริง:</b> {f.filename}</p>
                 <p>📑 <b>ประเภท:</b> {f.mime}</p>
-                <p>⏱️ <b>อัปโหลดเมื่อ:</b> {new Date(f.uploadedAt).toLocaleString()}</p>
-                <a
-                  href={`http://localhost:3000/api/download/${f.id || f.filename}?userId=${currentUserId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <p>⏱️ <b>อัปโหลดเมื่อ:</b>{" "}
+                  {new Date(f.uploadedAt).toLocaleString()}
+                </p>
+                <button
+                  onClick={() => handleDownload(f)}
                   className="btn-download"
                 >
                   ⬇️ ดาวน์โหลด
-                </a>
+                </button>
               </div>
             </div>
           ))}
@@ -103,6 +133,7 @@ function FolderDetail() {
           border-radius: 6px;
           text-decoration: none;
           font-size: 14px;
+          cursor: pointer;
         }
         .btn-download:hover {
           background: #0056b3;

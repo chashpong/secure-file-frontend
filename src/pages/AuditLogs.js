@@ -21,26 +21,28 @@ function AuditLogs() {
   return (
     <div className="container">
       <h2>Blockchain Audit Logs</h2>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>User</th>
-            <th>Filename</th>
-            <th>Action</th>
-            <th>Timestamp</th>
-          </tr>
-        </thead>
-        <tbody>
-          {logs.map((log, index) => (
-            <tr key={index}>
-              <td>{log.user}</td>
-              <td>{log.filename}</td>
-              <td>{log.action}</td>
-              <td>{log.timestamp}</td>
+      <div className="table-container">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Filename</th>
+              <th>Action</th>
+              <th>Timestamp</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {logs.map((log, index) => (
+              <tr key={index}>
+                <td>{log.user}</td>
+                <td>{log.filename}</td>
+                <td>{log.action}</td>
+                <td>{log.timestamp}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
