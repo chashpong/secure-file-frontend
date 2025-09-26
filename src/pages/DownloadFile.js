@@ -20,7 +20,6 @@ async function deriveKeyBytes(input) {
 
 function DownloadFile() {
   const [files, setFiles] = useState([]);
-  const [decryptKey, setDecryptKey] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -31,7 +30,6 @@ function DownloadFile() {
         const data = await res.json();
 
         console.log("📂 Files API response:", data);
-
         setFiles(Array.isArray(data) ? data : []);
       } catch (e) {
         console.error("❌ Failed to load files:", e);
@@ -42,12 +40,16 @@ function DownloadFile() {
 
   const handleDownload = async (f) => {
     try {
-      if (!decryptKey.trim()) {
-        alert("กรุณาใส่รหัสสำหรับถอดรหัสไฟล์");
+      // ✅ ให้ user กรอกรหัสผ่านตอนกดดาวน์โหลด
+      const decryptKey = prompt(
+        `ใส่รหัสถอดรหัสสำหรับไฟล์: ${f.filename}`
+      );
+      if (!decryptKey || !decryptKey.trim()) {
+        alert("❌ ต้องใส่รหัสก่อนดาวน์โหลด");
         return;
       }
 
-      // ✅ ดาวน์โหลดโดยใช้ token ไม่ต้องส่ง userId
+      // ✅ ดาวน์โหลดโดยใช้ token
       const res = await fetch(
         `http://localhost:3000/api/download/${f.storedName}`,
         {
@@ -94,16 +96,7 @@ function DownloadFile() {
 
   return (
     <div className="container">
-      <h2>📥 Download Encrypted Files (ถอดรหัสที่เบราว์เซอร์)</h2>
-
-      <div style={{ margin: "8px 0" }}>
-        <input
-          placeholder="รหัสสำหรับถอดรหัส (hex64 หรือข้อความธรรมดา)"
-          value={decryptKey}
-          onChange={(e) => setDecryptKey(e.target.value)}
-          style={{ width: "360px" }}
-        />
-      </div>
+      <h2>📥 Download Encrypted Files (กดแล้วใส่รหัสทันที)</h2>
 
       <table className="table">
         <thead>
