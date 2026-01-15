@@ -86,7 +86,9 @@ function UploadFile() {
     }
 
     try {
+      // แปลงไฟล์เป็น ArrayBuffer (ใช้วัดขนาดไฟล์ด้วย)
       const plainBuf = await file.arrayBuffer();
+
       const keyBytes = await deriveKeyBytes(encryptionKey.trim());
       const cryptoKey = await crypto.subtle.importKey(
         "raw",
@@ -96,12 +98,18 @@ function UploadFile() {
         ["encrypt"]
       );
       const iv = crypto.getRandomValues(new Uint8Array(16)); // IV 16 bytes
+
+      // ⭐ เริ่มจับเวลาเข้ารหัส
+      const encStart = performance.now();
       const cipherBuf = await crypto.subtle.encrypt(
         { name: "AES-GCM", iv },
         cryptoKey,
         plainBuf
       );
+      const encEnd = performance.now();
+      const encTime = encEnd - encStart;
 
+      // เตรียม formData สำหรับอัปโหลด
       const formData = new FormData();
       formData.append(
         "cipher",
@@ -109,12 +117,14 @@ function UploadFile() {
         `${Date.now()}_${file.name}.enc`
       );
       formData.append("originalName", file.name);
-      formData.append("filename", file.name); // ✅ ใช้ชื่อไฟล์จริงแทน
+      formData.append("filename", file.name);
       formData.append("folder", folder);
       formData.append("iv", bytesToHex(iv));
       formData.append("mime", file.type || "application/octet-stream");
       if (currentUserId) formData.append("userId", currentUserId);
 
+      // ⭐ เริ่มจับเวลาอัปโหลด
+      const uploadStart = performance.now();
       const res = await fetch("http://localhost:3000/api/upload", {
         method: "POST",
         body: formData,
@@ -122,9 +132,24 @@ function UploadFile() {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
+      const uploadEnd = performance.now();
+      const uploadTime = uploadEnd - uploadStart;
 
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Upload failed");
+
+      // ⭐ log ผลการทดสอบลง Console
+      console.log("===== Performance Test =====");
+      console.log("File name   :", file.name);
+      console.log("File size   :", plainBuf.byteLength, "bytes");
+      console.log("Encrypt time:", encTime.toFixed(2), "ms");
+      console.log("Upload time :", uploadTime.toFixed(2), "ms");
+      console.log(
+        "Total (enc + upload):",
+        (encTime + uploadTime).toFixed(2),
+        "ms"
+      );
+      console.log("============================");
 
       alert("✅ อัปโหลดไฟล์ที่เข้ารหัสแล้วสำเร็จ");
       localStorage.setItem("lastFolderId", folder);
